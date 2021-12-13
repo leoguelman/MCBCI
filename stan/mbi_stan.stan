@@ -1,7 +1,7 @@
 data {
   int<lower=0> N;                   // sample size
   int<lower=0> d_a;                 // number of covariates in the assignment model
-  int<lower=0> d_o;                 // number of covariates in the outcome
+  int<lower=0> d_o;                 // number of covariates in the outcome model
   matrix[N, d_a] X_a;               // covariates matrix for assignment model
   matrix[N, d_o] X_o;               // covariates matrix for outcome model
   vector[N] y;                      // observed outcome
@@ -40,7 +40,7 @@ model {
    // LIKELIHOOD
 
    if(a_miss == 1){
-     a ~ bernoulli_logit(0.7 + 0.3 *X_a * phi); 
+     a ~ bernoulli_logit(0.7 + 0.3 * X_a * phi); 
    } else {
      a ~ bernoulli_logit(X_a * phi);
    }
@@ -52,7 +52,8 @@ generated quantities{
   real y0[N];                       // potential outcome if a=0
   real y1[N];                       // potential outcome if a=1
   real tau_unit[N];                 // unit-level treatment effect
-  vector [N] a_rep;                 // replicated predictions from treatment assignment from the posterior predictive distribution.
+  vector [N] a_prob_rep;            // replicated prob predictions from treatment assignment from the posterior distribution. 
+  vector [N] a_rep;                 // replicated predictions from treatment assignment from the posterior distribution.
   for(n in 1:N){
     real mu_c = X_o[n,]*theta;        
     real mu_t = X_o[n,]*theta + tau;
@@ -65,6 +66,7 @@ generated quantities{
       y1[n] = normal_rng(mu_t + rho*(y[n] - mu_c), sigma*sqrt(1 - rho^2)); 
     }
     tau_unit[n] = y1[n] - y0[n];
+    a_prob_rep[n] = inv_logit(X_a[n] * phi);
     a_rep[n] = bernoulli_rng(inv_logit(X_a[n] * phi));
   }
   tau_fs = mean(tau_unit);        
