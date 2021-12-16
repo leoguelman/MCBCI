@@ -52,30 +52,30 @@ generated quantities{
   real y0[N];                       // potential outcome if a=0
   real y1[N];                       // potential outcome if a=1
   real tau_unit[N];                 // unit-level treatment effect
-  vector [N] a_prob_rep;            // replicated prob predictions from treatment assignment from the posterior distribution. 
-  vector [N] a_rep;                 // replicated predictions from treatment assignment from the posterior distribution. 
-  vector[N] log_lik_y_0;            // calculate log-likelihood y_0
-  vector[N] log_lik_y_1;            // calculate log-likelihood y_1
-  vector[N] log_lik_rd;             // calculate log-likelihood reference discrepancy
+  vector [N] a_prob_rep;            // replicated prob predictions for treatment assignment from the posterior distribution. 
+  vector [N] a_rep;                 // replicated predictions for treatment assignment from the posterior distribution.
+  vector [N] log_lik_y_obs;         // calculate log-likelihood y obs for realized discrepancy
+  vector [N] log_lik_ref_y0;        // calculate log-likelihood ref y0
+  vector [N] log_lik_ref_y1;        // calculate log-likelihood ref y1
 
   for(n in 1:N){
     real mu_c = X_o[n,]*theta;        
     real mu_t = X_o[n,]*theta + tau;
 
-    # stan output required to compute realized discrepancy (outcome model)
-    log_lik_y_0[n] = normal_lpdf(y[n] | mu_c, sigma);
-    log_lik_y_1[n] = normal_lpdf(y[n] | mu_t, sigma);
-
     if(a[n] == 1){                
       y0[n] = normal_rng(mu_c + rho*(y[n] - mu_t), sigma*sqrt(1 - rho^2)); 
       y1[n] = y[n];
+      log_lik_y_obs[n] = normal_lpdf(y[n] | mu_t, sigma);
+      
     } else{                        
       y0[n] = y[n];       
       y1[n] = normal_rng(mu_t + rho*(y[n] - mu_c), sigma*sqrt(1 - rho^2)); 
+      log_lik_y_obs[n] = normal_lpdf(y[n] | mu_c, sigma);
     }
     
-    # stan output required to compute reference discrepancy (outcome model)
-    log_lik_rd[n] = normal_lpdf(y0[n] | mu_c, sigma) + normal_lpdf(y1[n] | mu_t, sigma);
+    // stan output required to compute reference discrepancy (outcome model)
+    log_lik_ref_y0[n] = normal_lpdf(y0[n] | mu_c, sigma);
+    log_lik_ref_y1[n] = normal_lpdf(y1[n] | mu_t, sigma);
 
     tau_unit[n] = y1[n] - y0[n];
     a_prob_rep[n] = inv_logit(X_a[n] * phi);
