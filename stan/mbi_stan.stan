@@ -52,7 +52,7 @@ generated quantities{
   real y0[N];                       // potential outcome if a=0
   real y1[N];                       // potential outcome if a=1
   real tau_unit[N];                 // unit-level treatment effect
-  vector [N] a_prob_rep;            // replicated prob predictions for treatment assignment from the posterior distribution. 
+  vector [N] a_prob;                // predictions for treatment assignment from the posterior distribution 
   vector [N] a_rep;                 // replicated predictions for treatment assignment from the posterior distribution.
   vector [N] log_lik_y_obs;         // calculate log-likelihood y obs for realized discrepancy
   vector [N] log_lik_ref_y0;        // calculate log-likelihood ref y0
@@ -78,7 +78,7 @@ generated quantities{
     log_lik_ref_y1[n] = normal_lpdf(y1[n] | mu_t, sigma);
 
     tau_unit[n] = y1[n] - y0[n];
-    a_prob_rep[n] = inv_logit(X_a[n] * phi);
+    a_prob[n] = inv_logit(X_a[n] * phi);
     a_rep[n] = bernoulli_rng(inv_logit(X_a[n] * phi));
   }
   tau_fs = mean(tau_unit);        
